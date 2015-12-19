@@ -21,6 +21,7 @@ Revisions:
 08/01/2012 - Ludvik Jerabek - Created separate functions for char and wchar_t characters so single dll can do both unicode and ansi
 10/15/2012 - Ludvik Jerabek - Modified to match latest GNU features
 06/19/2015 - Ludvik Jerabek - Fixed maximum option limitation caused by option_a (255) and option_w (65535) structure val variable
+18/12/2015 - CodeBeast357 - Resolved all string related functions to _TCHAR
 
 **DISCLAIMER**
 THIS MATERIAL IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
