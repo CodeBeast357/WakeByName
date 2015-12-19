@@ -90,7 +90,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include=".editorconfig" />
-    <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="getopt.h" />
