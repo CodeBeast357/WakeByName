@@ -89,9 +89,6 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include=".editorconfig" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="getopt.h" />
     <ClInclude Include="WakeByName.h" />
     <ClInclude Include="stdafx.h" />
