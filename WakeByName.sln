@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WakeByName", "WakeByName\WakeByName.vcxproj", "{30A218BF-9F18-423C-A7E1-FA1CD873629B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WakeByName", "src\WakeByName.vcxproj", "{30A218BF-9F18-423C-A7E1-FA1CD873629B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2E3407DD-1040-40A8-AA26-A8F2715338C6}"
 	ProjectSection(SolutionItems) = preProject
