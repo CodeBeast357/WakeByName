@@ -2,6 +2,7 @@ WakeByName
 ==
 
 [![Build status](https://ci.appveyor.com/api/projects/status/github/CodeBeast357/WakeByName?svg=true)](https://ci.appveyor.com/project/CodeBeast357/wakebyname)
+[![Coverage Status](https://coveralls.io/repos/github/CodeBeast357/WakeByName/badge.svg?branch=master)](https://coveralls.io/github/CodeBeast357/WakeByName?branch=master)
 
 Overview
 --

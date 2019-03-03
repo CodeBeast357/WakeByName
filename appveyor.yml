@@ -1,0 +1,7 @@
+version: 1.0.{build}
+install:
+- cmd: pip install --user cpp-coveralls
+build:
+  verbosity: detailed
+after_test:
+- cmd: cpp-coveralls -n --include src\WakeByName.cpp
