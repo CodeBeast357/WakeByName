@@ -1,5 +1,8 @@
 WakeByName
 ==
+
+[![Build status](https://ci.appveyor.com/api/projects/status/github/CodeBeast357/WakeByName?svg=true)](https://ci.appveyor.com/project/CodeBeast357/wakebyname)
+
 Overview
 --
 This command line tool elevates the [Wake-on-LAN](<https://en.wikipedia.org/wiki/Wake-on-lan>) mechanism by using the usual network resolution protocols. It firstly resolves a list of [domain name](<https://en.wikipedia.org/wiki/Domain_name>)s by the use of [DNS](<https://en.wikipedia.org/wiki/Domain_Name_System> "Domain Name System") lookups. The resulting [IP address](<https://en.wikipedia.org/wiki/IP_address> "Internet Protocol address")es are then each translated to a [MAC address](<https://en.wikipedia.org/wiki/MAC_address> "Media Access Control address") by the [ARP](<https://en.wikipedia.org/wiki/Address_Resolution_Protocol> "Address Resolution Protocol"). Once it has the MAC address, it builds up the magic packet and sends it on an [UDP](<https://en.wikipedia.org/wiki/User_Datagram_Protocol> "User Datagram Protocol") broadcast or multicast socket.
