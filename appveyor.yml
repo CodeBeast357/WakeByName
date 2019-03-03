@@ -1,6 +1,6 @@
-version: 1.0.{build}
+version: 0.0.{build}
 install:
-- cmd: pip install --user cpp-coveralls
+- cmd: pip install cpp-coveralls PyYAML
 build:
   verbosity: detailed
 after_test:
