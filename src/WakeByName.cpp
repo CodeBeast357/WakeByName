@@ -236,15 +236,17 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             auto macArr = (PBYTE)&mac;
             for (auto index = macLen; index < PAYLOAD_LEN; ++index)
                 payload[index] = macArr[index % macLen];
+            sendto(sock, payload, PAYLOAD_LEN, 0, (SOCKADDR*)&src, sizeof(src));
+#ifdef IPv6
+            sendto(sock6, payload, PAYLOAD_LEN, 0, (SOCKADDR*)&src, sizeof(src));
+#endif
 #else
             for (auto index = dest.PhysicalAddressLength; index < PAYLOAD_LEN; ++index)
                 payload[index] = dest.PhysicalAddress[index % dest.PhysicalAddressLength];
-#endif
-            sendto(sock, payload, PAYLOAD_LEN, 0, (SOCKADDR*)&src, sizeof(src));
-            //WSASendTo(sock, &payload, 1UL, NULL, NULL, (SOCKADDR*)&src.Ipv4, sizeof(src), NULL, NULL);
+            WSASendTo(sock, &payload, 1UL, NULL, NULL, (SOCKADDR*)&src.Ipv4, sizeof(src), NULL, NULL);
 #ifdef IPv6
-            sendto(sock6, payload, PAYLOAD_LEN, 0, (SOCKADDR*)&src, sizeof(src));
-            //WSASendTo(sock, &payload, 1UL, NULL, NULL, (SOCKADDR*)&src.Ipv6, sizeof(src), NULL, NULL);
+            WSASendTo(sock6, &payload, 1UL, NULL, NULL, (SOCKADDR*)&src.Ipv6, sizeof(src), NULL, NULL);
+#endif
 #endif
         }
     FREELIST:
