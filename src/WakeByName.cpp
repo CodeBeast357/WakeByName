@@ -138,22 +138,22 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     payload.len = PAYLOAD_LEN;
     payload.buf = new CHAR[PAYLOAD_LEN] { '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', '\xFF' };
 #endif
-    for (auto item = &pListTargets->Next; item->Next; item = item->Next) {
-        auto entry = (PNameEntry)item->Next;
+    for (auto targetItem = InterlockedPopEntrySList(pListTargets); targetItem; targetItem = InterlockedPopEntrySList(pListTargets)) {
+        auto entry = (PNameEntry)targetItem->Next;
         PDNS_RECORD results = NULL;
         if ((err = DnsQuery(entry->Value, DNS_TYPES, DNS_OPTIONS, pSrvList, &results, NULL)) || !results) {
             _tprintf(DNS_NOTFOUND, entry->Value);
             goto FREELIST;
         }
-        for (auto item = results; item; item = item->pNext) {
+        for (auto resultItem = results; resultItem; resultItem = resultItem->pNext) {
             ADDRESS_FAMILY family;
-            switch (item->wType) {
+            switch (resultItem->wType) {
                 case DNS_TYPE_A:
 #ifndef WSASendTo
-                    dest.s_addr = item->Data.A.IpAddress;
+                    dest.s_addr = resultItem->Data.A.IpAddress;
                     family = AF_INET;
 #else
-                    dest.Address.Ipv4.sin_addr.s_addr = item->Data.A.IpAddress;
+                    dest.Address.Ipv4.sin_addr.s_addr = resultItem->Data.A.IpAddress;
                     dest.Address.si_family = AF_INET;
 #endif
 #ifdef _DEBUG
@@ -163,10 +163,10 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
 #ifdef IPv6
                 case DNS_TYPE_AAAA:
 #ifndef WSASendTo
-                    *dest6.u.Byte = *item->Data.AAAA.Ip6Address.IP6Byte;
+                    *dest6.u.Byte = *resultItem->Data.AAAA.Ip6Address.IP6Byte;
                     family = AF_INET6;
 #else
-                    *dest.Address.Ipv6.sin6_addr.u.Byte = *item->Data.AAAA.Ip6Address.IP6Byte;
+                    *dest.Address.Ipv6.sin6_addr.u.Byte = *resultItem->Data.AAAA.Ip6Address.IP6Byte;
                     dest.Address.si_family = AF_INET6;
 #endif
 #ifdef _DEBUG
