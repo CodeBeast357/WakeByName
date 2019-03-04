@@ -3,5 +3,9 @@ install:
 - cmd: pip install cpp-coveralls PyYAML
 build:
   verbosity: detailed
+before_test:
+- cmd: '"%PROGRAMFILES(x86)%\Windows Kits\10\Tools\x64\Devcon.exe" install "%WINDIR%\Inf\Netloop.inf" *MSLOOP'
 after_test:
-- cmd: cpp-coveralls -n --include src\WakeByName.cpp
+- cmd: >-
+    "%PROGRAMFILES(x86)%\Windows Kits\10\Tools\x64\Devcon.exe" remove *MSLOOP
+    cpp-coveralls -n --include src\WakeByName.cpp
