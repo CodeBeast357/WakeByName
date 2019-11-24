@@ -139,7 +139,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     payload.buf = new CHAR[PAYLOAD_LEN] { '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', '\xFF' };
 #endif
     for (auto targetItem = InterlockedPopEntrySList(pListTargets); targetItem; targetItem = InterlockedPopEntrySList(pListTargets)) {
-        auto entry = (PNameEntry)targetItem->Next;
+        auto entry = (PNameEntry)targetItem;
         PDNS_RECORD results = NULL;
         if ((err = DnsQuery(entry->Value, DNS_TYPES, DNS_OPTIONS, pSrvList, &results, NULL)) || !results) {
             _tprintf(DNS_NOTFOUND, entry->Value);
