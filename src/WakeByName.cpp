@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-//#define IPv6
+#define IPv6
 //#define WSASendTo
 
 #pragma region Constants
@@ -106,6 +106,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     SOCKET sock = INVALID_SOCKET;
     if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO::IPPROTO_UDP)) == INVALID_SOCKET)
         goto CLEANUP;
+#ifndef IPv6
 #ifndef _DEBUG
     IPAddr dest;
 #else
@@ -114,14 +115,13 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     SOCKADDR_IN src;
     src.sin_family = AF_INET;
     src.sin_port = port;
-#ifdef IPv6
+#else
     SOCKET sock6 = INVALID_SOCKET;
     if ((sock6 = socket(AF_INET6, SOCK_DGRAM, IPPROTO::IPPROTO_UDP)) == INVALID_SOCKET)
         goto CLEANUP;
-    IN6_ADDR dest6;
-    SOCKADDR_IN6 src6;
-    src6.sin6_family = AF_INET6;
-    src6.sin6_port = port;
+    MIB_IPNET_ROW2 dest;
+    dest.Address.si_family = AF_INET6;
+    SOCKADDR_INET src;
 #endif
 #ifndef WSASendTo
     auto payload = new CHAR[PAYLOAD_LEN] { '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', '\xFF' };
@@ -141,6 +141,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             ADDRESS_FAMILY family;
             switch (resultItem->wType) {
                 case DNS_TYPE_A:
+#ifndef IPv6
 #ifndef _DEBUG
                     dest = resultItem->Data.A.IpAddress;
 #else
@@ -150,11 +151,15 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
 #ifdef _DEBUG
                     bufferSize = INET_ADDRSTRLEN;
 #endif
+#else
+                    dest.Address.Ipv4.sin_addr = resultItem->Data.A.IpAddress;
+                    dest.Address.Ipv4.sin_family = AF_INET;
+#endif
                     break;
 #ifdef IPv6
                 case DNS_TYPE_AAAA:
-                    *dest6.u.Byte = *resultItem->Data.AAAA.Ip6Address.IP6Byte;
-                    family = AF_INET6;
+                    dest.Address.Ipv6.sin6_addr = resultItem->Data.AAAA.Ip6Address;
+                    dest.Address.Ipv6.sin6_family = AF_INET6;
 #ifdef _DEBUG
                     bufferSize = INET6_ADDRSTRLEN;
 #endif
@@ -165,7 +170,11 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             }
 #ifdef _DEBUG
             repr = new _TCHAR[bufferSize];
+#ifndef IPv6
             if (InetNtop(family, &dest, repr, bufferSize))
+#else
+            if (InetNtop(family, &dest, repr, bufferSize))
+#endif
                 _tprintf(_T("Got IP Address: %s\r\n"), repr);
 #endif
             //        DWORD nicIndex;
@@ -192,12 +201,17 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             DWORD mac[2U];
             auto macLen = MAC_LEN;
             //if (SendARP(dest.s_addr, src.sin_addr.s_addr, &mac, &macLen) != NO_ERROR)
+#ifndef IPv6
 #ifndef _DEBUG
             if (SendARP(dest, INADDR_ANY, &mac, &macLen) != NO_ERROR)
 #else
             if (SendARP(dest.s_addr, INADDR_ANY, &mac, &macLen) != NO_ERROR)
 #endif
                 continue;
+#else
+            if (ResolveIpNetEntry2(&dest6, NULL) != NO_ERROR)
+                continue;
+#endif
 #ifdef _DEBUG
             else {
                 auto macArr = (PBYTE)&mac;
@@ -215,16 +229,18 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
                 payload.buf[index] = macArr[index % macLen];
 #endif
 #ifndef WSASendTo
+#ifndef IPv6
             sendto(sock, payload, PAYLOAD_LEN, 0, (SOCKADDR*)&src, sizeof(src));
-#ifdef IPv6
+#else
             sendto(sock6, payload, PAYLOAD_LEN, 0, (SOCKADDR*)&src, sizeof(src));
 #endif
 #else
+#ifdef IPv6
             if (err = WSASendTo(sock, &payload, 1UL, NULL, NULL, (SOCKADDR*)&src, sizeof(src), NULL, NULL) != NO_ERROR)
             {
                 _tprintf(_T("WSASendTo: error %d"), err);
             }
-#ifdef IPv6
+#else
             WSASendTo(sock6, &payload, 1UL, NULL, NULL, (SOCKADDR*)&src, sizeof(src), NULL, NULL);
 #endif
 #endif
