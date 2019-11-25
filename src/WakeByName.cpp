@@ -101,11 +101,15 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     //    goto FREETABLE;
     //}
     WSADATA wsaData;
-    if (err = WSAStartup(VERSION_WSA, &wsaData) != NO_ERROR)
+    if (err = WSAStartup(VERSION_WSA, &wsaData) != NO_ERROR) {
+        err = EXIT_FAILURE;
         goto CLEANUP;
+    }
     SOCKET sock = INVALID_SOCKET;
-    if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO::IPPROTO_UDP)) == INVALID_SOCKET)
+    if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO::IPPROTO_UDP)) == INVALID_SOCKET) {
+        err = EXIT_FAILURE;
         goto CLEANUP;
+    }
 #ifndef _DEBUG
     IPAddr dest;
 #else
@@ -135,6 +139,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
         PDNS_RECORD results = NULL;
         if ((err = DnsQuery(entry->Value, DNS_TYPES, DNS_OPTIONS, pSrvList, &results, NULL)) || !results) {
             _tprintf(DNS_NOTFOUND, entry->Value);
+            err = EXIT_FAILURE;
             goto FREELIST;
         }
         for (auto resultItem = results; resultItem; resultItem = resultItem->pNext) {
