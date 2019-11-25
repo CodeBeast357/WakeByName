@@ -8,6 +8,10 @@
 #pragma region Constants
 const auto USAGE = _T("%s <name>\r\n");
 const auto DNS_NOTFOUND = _T("Could not resolve: %s\r\n");
+const auto MALLOC_FAILED = _T("Memory allocation failed\r\n");
+const auto OP_MISSING = _T("Option -%c requires an operand\r\n");
+const auto OP_UNRECOGNIZED = _T("Unrecognized option: -%c\r\n");
+const auto DOMAIN_NAME_MISSING = _T("Please provide a domain name\r\n");
 const USHORT PORT = 7U;
 const DWORD DNS_OPTIONS = DNS_QUERY_STANDARD;
 #ifdef IPv6
@@ -38,7 +42,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
 #endif
 #pragma endregion
     if ((pListTargets = (PSLIST_HEADER)_aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT)) == NULL) {
-        _ftprintf(stderr, _T("Memory allocation failed\r\n"));
+        _ftprintf(stderr, MALLOC_FAILED);
         err = EXIT_FAILURE;
         goto END;
     }
@@ -48,7 +52,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             case _T('n'):
                 if (!pSrvList) {
                     if (!(pSrvList = (PIP4_ARRAY)LocalAlloc(LPTR, sizeof(IP4_ARRAY)))) {
-                        _ftprintf(stderr, _T("Memory allocation failed\r\n"));
+                        _ftprintf(stderr, MALLOC_FAILED);
                         err = EXIT_FAILURE;
                         goto END;
                     }
@@ -62,7 +66,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             case -1:
                 PNameEntry item;
                 if (!(item = (PNameEntry)_aligned_malloc(sizeof(NameEntry), MEMORY_ALLOCATION_ALIGNMENT))) {
-                    _ftprintf(stderr, _T("Memory allocation failed\r\n"));
+                    _ftprintf(stderr, MALLOC_FAILED);
                     err = EXIT_FAILURE;
                     goto END;
                 }
@@ -70,11 +74,11 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
                 InterlockedPushEntrySList(pListTargets, &item->Entry);
                 break;
             case _T(':'):
-                _ftprintf(stderr, _T("Option -%c requires an operand\r\n"), optopt);
+                _ftprintf(stderr, OP_MISSING, optopt);
                 err = EXIT_FAILURE;
                 goto END;
             case _T('?'):
-                _ftprintf(stderr, _T("Unrecognized option: -%c\r\n"), optopt);
+                _ftprintf(stderr, OP_UNRECOGNIZED, optopt);
                 err = EXIT_FAILURE;
                 goto END;
             case _T('h'):
@@ -87,7 +91,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
         }
     }
     if (!QueryDepthSList(pListTargets)) {
-        _tprintf(_T("Please provide a domain name\r\n"));
+        _tprintf(DOMAIN_NAME_MISSING);
         err = EXIT_FAILURE;
         goto END;
     }
