@@ -4,6 +4,7 @@
 #include "stdafx.h"
 //#define IPv6
 //#define WSASendTo
+//#define Paramcast
 
 #pragma region Constants
 const auto USAGE = _T("%s <name>\r\n");
@@ -17,7 +18,9 @@ const WORD DNS_TYPES = DNS_TYPE_A;
 #endif
 const DWORD VERSION_WSA = MAKEWORD(2UL, 2UL);
 const INT PAYLOAD_LEN = 102;
-//const ULONG BROADCAST_FULL = -1L;
+#ifdef Paramcast
+const ULONG BROADCAST_FULL = -1L;
+#endif
 const ULONG MAC_LEN = 6UL;
 #pragma endregion
 
@@ -168,30 +171,18 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             if (InetNtop(family, &dest, repr, bufferSize))
                 _tprintf(_T("Got IP Address: %s\r\n"), repr);
 #endif
-            //        DWORD nicIndex;
-            //        if (GetBestInterfaceEx((SOCKADDR*)&dest.Address.Ipv4, &nicIndex) != NO_ERROR)
-            //            continue;
-            //#ifdef _DEBUG
-            //        else
-            //            _tprintf(_T("Will send on interface index: %i\r\n"), nicIndex);
-            //#endif
-            //        PMIB_IPADDRROW nic;
-            //        for (auto entry = 0U; entry < nicInfos->dwNumEntries; ++entry) {
-            //            if ((nic = &nicInfos->table[entry])->dwIndex == nicIndex) {
-            //                break;
-            //            }
-            //        }
-            //        src.Ipv4.sin_addr.s_addr = nic->dwMask ^ BROADCAST_FULL | nic->dwAddr;
-            //#ifdef IPv6
-            //        IN6_ADDR src6;
-            //#endif
-            //#ifdef _DEBUG
-            //        if (InetNtop(dest.Address.si_family, &src.Ipv4.sin_addr, repr, bufferSize))
-            //            _tprintf(_T("With Broadcast: %s\r\n"), repr);
-            //#endif
+#ifdef Paramcast
+            PMIB_IPFORWARDROW routeInfo = NULL;
+            if ((GetBestRoute(dest.s_addr, NULL, routeInfo) != NO_ERROR) || !routeInfo)
+                continue;
+#ifdef _DEBUG
+            else
+                _tprintf(_T("Will send on interface index: %i\r\n"), routeInfo->dwForwardIfIndex);
+#endif
+            src.sin_addr.S_un.S_addr = routeInfo->dwForwardMask ^ BROADCAST_FULL | routeInfo->dwForwardDest;
+#endif
             DWORD mac[2U];
             auto macLen = MAC_LEN;
-            //if (SendARP(dest.s_addr, src.sin_addr.s_addr, &mac, &macLen) != NO_ERROR)
 #ifndef _DEBUG
             if (SendARP(dest, INADDR_ANY, &mac, &macLen) != NO_ERROR)
 #else
