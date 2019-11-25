@@ -106,7 +106,11 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     SOCKET sock = INVALID_SOCKET;
     if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO::IPPROTO_UDP)) == INVALID_SOCKET)
         goto CLEANUP;
+#ifndef _DEBUG
+    IPAddr dest;
+#else
     IN_ADDR dest;
+#endif
     SOCKADDR_IN src;
     src.sin_family = AF_INET;
     src.sin_port = port;
@@ -137,7 +141,11 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             ADDRESS_FAMILY family;
             switch (resultItem->wType) {
                 case DNS_TYPE_A:
+#ifndef _DEBUG
+                    dest = resultItem->Data.A.IpAddress;
+#else
                     dest.s_addr = resultItem->Data.A.IpAddress;
+#endif
                     family = AF_INET;
 #ifdef _DEBUG
                     bufferSize = INET_ADDRSTRLEN;
@@ -184,7 +192,11 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             DWORD mac[2U];
             auto macLen = MAC_LEN;
             //if (SendARP(dest.s_addr, src.sin_addr.s_addr, &mac, &macLen) != NO_ERROR)
+#ifndef _DEBUG
+            if (SendARP(dest, INADDR_ANY, &mac, &macLen) != NO_ERROR)
+#else
             if (SendARP(dest.s_addr, INADDR_ANY, &mac, &macLen) != NO_ERROR)
+#endif
                 continue;
 #ifdef _DEBUG
             else {
