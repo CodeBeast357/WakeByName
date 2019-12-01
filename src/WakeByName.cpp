@@ -170,34 +170,21 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             if (InetNtop(family, &dest, repr, bufferSize))
                 _tprintf(_T("Got IP Address: %s\r\n"), repr);
 #endif
-            //        DWORD nicIndex;
-            //        if (GetBestInterfaceEx((SOCKADDR*)&dest.Address.Ipv4, &nicIndex) != NO_ERROR)
-            //            continue;
-            //#ifdef _DEBUG
-            //        else
-            //            _tprintf(_T("Will send on interface index: %i\r\n"), nicIndex);
-            //#endif
-            //        PMIB_IPADDRROW nic;
-            //        for (auto entry = 0U; entry < nicInfos->dwNumEntries; ++entry) {
-            //            if ((nic = &nicInfos->table[entry])->dwIndex == nicIndex) {
-            //                break;
-            //            }
-            //        }
-            //        src.Ipv4.sin_addr.s_addr = nic->dwMask ^ BROADCAST_FULL | nic->dwAddr;
-            //#ifdef IPv6
-            //        IN6_ADDR src6;
-            //#endif
-            //#ifdef _DEBUG
-            //        if (InetNtop(dest.Address.si_family, &src.Ipv4.sin_addr, repr, bufferSize))
-            //            _tprintf(_T("With Broadcast: %s\r\n"), repr);
-            //#endif
+            src.sin_addr.s_addr = INADDR_BROADCAST;
+            DWORD nicIndex;
+            PMIB_IPFORWARDROW pBestRoute = NULL;
+#ifndef _DEBUG
+            if (GetBestInterface(dest, &nicIndex) != NO_ERROR && GetBestRoute(dest, NULL, pBestRoute) != NO_ERROR)
+#else
+            if (GetBestInterface(dest.s_addr, &nicIndex) != NO_ERROR && GetBestRoute(dest.s_addr, NULL, pBestRoute) != NO_ERROR)
+#endif
+                src.sin_addr.s_addr = pBestRoute->dwForwardMask;
             DWORD mac[2U];
             auto macLen = MAC_LEN;
-            //if (SendARP(dest.s_addr, src.sin_addr.s_addr, &mac, &macLen) != NO_ERROR)
 #ifndef _DEBUG
-            if (SendARP(dest, INADDR_ANY, &mac, &macLen) != NO_ERROR)
+            if (SendARP(dest, src.sin_addr.s_addr, &mac, &macLen) != NO_ERROR)
 #else
-            if (SendARP(dest.s_addr, INADDR_ANY, &mac, &macLen) != NO_ERROR)
+            if (SendARP(dest.s_addr, src.sin_addr.s_addr, &mac, &macLen) != NO_ERROR)
 #endif
                 continue;
 #ifdef _DEBUG
