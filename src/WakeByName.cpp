@@ -131,13 +131,6 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     src6.sin6_family = AF_INET6;
     src6.sin6_port = port;
 #endif
-#ifndef WSASendTo
-    auto payload = new CHAR[PAYLOAD_LEN] { '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', '\xFF' };
-#else
-    WSABUF payload;
-    payload.len = PAYLOAD_LEN;
-    payload.buf = new CHAR[PAYLOAD_LEN] { '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', '\xFF' };
-#endif
     for (auto targetItem = InterlockedPopEntrySList(pListTargets); targetItem; targetItem = InterlockedPopEntrySList(pListTargets)) {
         auto entry = (PNameEntry)targetItem;
         PDNS_RECORD results = NULL;
@@ -215,6 +208,13 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
                     _tprintf(_T("%.2x-"), macArr[index]);
                 _tprintf(_T("\r\n"));
             }
+#endif
+#ifndef WSASendTo
+            auto payload = new CHAR[PAYLOAD_LEN]{ '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', '\xFF' };
+#else
+            WSABUF payload;
+            payload.len = PAYLOAD_LEN;
+            payload.buf = new CHAR[PAYLOAD_LEN]{ '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', '\xFF' };
 #endif
             auto macArr = (PBYTE)&mac;
             for (auto index = macLen; index < PAYLOAD_LEN; ++index)
