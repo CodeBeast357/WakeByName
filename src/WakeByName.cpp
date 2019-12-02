@@ -172,13 +172,13 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
 #endif
             src.sin_addr.s_addr = INADDR_BROADCAST;
             DWORD nicIndex;
-            PMIB_IPFORWARDROW pBestRoute = NULL;
+            MIB_IPFORWARDROW bestRoute;
 #ifndef _DEBUG
             if (GetBestInterface(dest, &nicIndex) != NO_ERROR && GetBestRoute(dest, NULL, pBestRoute) != NO_ERROR)
 #else
-            if (GetBestInterface(dest.s_addr, &nicIndex) != NO_ERROR && GetBestRoute(dest.s_addr, NULL, pBestRoute) != NO_ERROR)
+            if (GetBestInterface(dest.s_addr, &nicIndex) == NO_ERROR && GetBestRoute(dest.s_addr, NULL, &bestRoute) == NO_ERROR)
 #endif
-                src.sin_addr.s_addr = pBestRoute->dwForwardMask;
+                src.sin_addr.s_addr = bestRoute.dwForwardMask;
             DWORD mac[2U];
             auto macLen = MAC_LEN;
 #ifndef _DEBUG
