@@ -14,4 +14,5 @@
 #include <WS2tcpip.h>
 #include <WinDNS.h>
 #include <iphlpapi.h>
+#include <atlstr.h>
 #include "getopt.h"

@@ -12,6 +12,7 @@ const auto MALLOC_FAILED = _T("Memory allocation failed\r\n");
 const auto OP_MISSING = _T("Option -%c requires an operand\r\n");
 const auto OP_UNRECOGNIZED = _T("Unrecognized option: -%c\r\n");
 const auto DOMAIN_NAME_MISSING = _T("Please provide a domain name\r\n");
+const auto SOCKET_ERR = _T("Could not open socket\r\n");
 const USHORT PORT = 7U;
 const DWORD DNS_OPTIONS = DNS_QUERY_STANDARD;
 #ifdef IPv6
@@ -29,6 +30,25 @@ typedef struct _NameEntry {
     SLIST_ENTRY Entry;
     _TCHAR* Value;
 } NameEntry, *PNameEntry;
+
+void printError(DWORD err)
+{
+    CString errorText;
+    LPTSTR errorBuffer;
+    FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        err,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR)&errorBuffer,
+        0,
+        NULL);
+    errorText = errorBuffer;
+    LocalFree(errorBuffer);
+    _ftprintf(stderr, errorText);
+}
 
 INT _tmain(INT argc, _TCHAR* argv[]) {
 #pragma region Parameters
@@ -106,11 +126,12 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     //}
     WSADATA wsaData;
     if (err = WSAStartup(VERSION_WSA, &wsaData) != NO_ERROR) {
-        err = EXIT_FAILURE;
+        printError(err);
         goto CLEANUP;
     }
     SOCKET sock = INVALID_SOCKET;
     if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO::IPPROTO_UDP)) == INVALID_SOCKET) {
+        _tprintf(SOCKET_ERR);
         err = EXIT_FAILURE;
         goto CLEANUP;
     }
@@ -125,7 +146,11 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
 #ifdef IPv6
     SOCKET sock6 = INVALID_SOCKET;
     if ((sock6 = socket(AF_INET6, SOCK_DGRAM, IPPROTO::IPPROTO_UDP)) == INVALID_SOCKET)
+    {
+        _tprintf(SOCKET_ERR);
+        err = EXIT_FAILURE;
         goto CLEANUP;
+    }
     IN6_ADDR dest6;
     SOCKADDR_IN6 src6;
     src6.sin6_family = AF_INET6;
@@ -134,9 +159,13 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     for (auto targetItem = InterlockedPopEntrySList(pListTargets); targetItem; targetItem = InterlockedPopEntrySList(pListTargets)) {
         auto entry = (PNameEntry)targetItem;
         PDNS_RECORD results = NULL;
-        if ((err = DnsQuery(entry->Value, DNS_TYPES, DNS_OPTIONS, pSrvList, &results, NULL)) || !results) {
+        DNS_STATUS errDns;
+        if (errDns = DnsQuery(entry->Value, DNS_TYPES, DNS_OPTIONS, pSrvList, &results, NULL)) {
+            printError(errDns);
+            goto FREELIST;
+        }
+        if (!results) {
             _tprintf(DNS_NOTFOUND, entry->Value);
-            err = EXIT_FAILURE;
             goto FREELIST;
         }
         for (auto resultItem = results; resultItem; resultItem = resultItem->pNext) {
@@ -173,20 +202,26 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
             src.sin_addr.s_addr = INADDR_BROADCAST;
             DWORD nicIndex;
             MIB_IPFORWARDROW bestRoute;
+            DWORD errIphlp;
 #ifndef _DEBUG
-            if (GetBestInterface(dest, &nicIndex) != NO_ERROR && GetBestRoute(dest, NULL, pBestRoute) != NO_ERROR)
+            if ((errIphlp = GetBestInterface(dest, &nicIndex)) == NO_ERROR && (errIphlp = GetBestRoute(dest, NULL, &bestRoute)) == NO_ERROR)
 #else
-            if (GetBestInterface(dest.s_addr, &nicIndex) == NO_ERROR && GetBestRoute(dest.s_addr, NULL, &bestRoute) == NO_ERROR)
+            if ((errIphlp = GetBestInterface(dest.s_addr, &nicIndex)) == NO_ERROR && (errIphlp = GetBestRoute(dest.s_addr, NULL, &bestRoute)) == NO_ERROR)
 #endif
                 src.sin_addr.s_addr = bestRoute.dwForwardMask;
+            else
+                printError(errIphlp);
             DWORD mac[2U];
             auto macLen = MAC_LEN;
 #ifndef _DEBUG
-            if (SendARP(dest, src.sin_addr.s_addr, &mac, &macLen) != NO_ERROR)
+            if ((errIphlp = SendARP(dest, src.sin_addr.s_addr, &mac, &macLen)) != NO_ERROR)
 #else
-            if (SendARP(dest.s_addr, src.sin_addr.s_addr, &mac, &macLen) != NO_ERROR)
+            if ((errIphlp = SendARP(dest.s_addr, src.sin_addr.s_addr, &mac, &macLen)) != NO_ERROR)
 #endif
+            {
+                printError(errIphlp);
                 continue;
+            }
 #ifdef _DEBUG
             else {
                 auto macArr = (PBYTE)&mac;
