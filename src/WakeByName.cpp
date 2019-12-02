@@ -56,6 +56,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     PSLIST_HEADER pListTargets = NULL;
     PIP4_ARRAY pSrvList = NULL;
     auto port = PORT;
+    auto subnet = false;
 #ifdef _DEBUG
     SIZE_T bufferSize;
     _TCHAR* repr = NULL;
@@ -68,7 +69,7 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
     }
     InitializeSListHead(pListTargets);
     while (optind < argc) {
-        switch (getopt(argc, argv, _T("hn:p:"))) {
+        switch (getopt(argc, argv, _T("hn:p:s"))) {
             case _T('n'):
                 if (!pSrvList) {
                     if (!(pSrvList = (PIP4_ARRAY)LocalAlloc(LPTR, sizeof(IP4_ARRAY)))) {
@@ -92,6 +93,9 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
                 }
                 item->Value = argv[optind++];
                 InterlockedPushEntrySList(pListTargets, &item->Entry);
+                break;
+            case _T('s'):
+                subnet = true;
                 break;
             case _T(':'):
                 _ftprintf(stderr, OP_MISSING, optopt);
@@ -200,17 +204,20 @@ INT _tmain(INT argc, _TCHAR* argv[]) {
                 _tprintf(_T("Got IP Address: %s\r\n"), repr);
 #endif
             src.sin_addr.s_addr = INADDR_BROADCAST;
-            DWORD nicIndex;
-            MIB_IPFORWARDROW bestRoute;
             DWORD errIphlp;
+            if (subnet)
+            {
+                DWORD nicIndex;
+                MIB_IPFORWARDROW bestRoute;
 #ifndef _DEBUG
-            if ((errIphlp = GetBestInterface(dest, &nicIndex)) == NO_ERROR && (errIphlp = GetBestRoute(dest, NULL, &bestRoute)) == NO_ERROR)
+                if ((errIphlp = GetBestInterface(dest, &nicIndex)) == NO_ERROR && (errIphlp = GetBestRoute(dest, NULL, &bestRoute)) == NO_ERROR)
 #else
-            if ((errIphlp = GetBestInterface(dest.s_addr, &nicIndex)) == NO_ERROR && (errIphlp = GetBestRoute(dest.s_addr, NULL, &bestRoute)) == NO_ERROR)
+                if ((errIphlp = GetBestInterface(dest.s_addr, &nicIndex)) == NO_ERROR && (errIphlp = GetBestRoute(dest.s_addr, NULL, &bestRoute)) == NO_ERROR)
 #endif
-                src.sin_addr.s_addr = bestRoute.dwForwardMask;
-            else
-                printError(errIphlp);
+                    src.sin_addr.s_addr = bestRoute.dwForwardMask;
+                else
+                    printError(errIphlp);
+            }
             DWORD mac[2U];
             auto macLen = MAC_LEN;
 #ifndef _DEBUG

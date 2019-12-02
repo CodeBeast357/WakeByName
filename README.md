@@ -22,3 +22,4 @@ Features
 * List of domain names to trigger
 * `n`: List of DNS servers to request (default: host NIC servers)
 * `p`: Port number (default: 7)
+* `s`: Flag for subnet range limitation
